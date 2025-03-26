@@ -168,6 +168,44 @@ body {
   grid-template-columns: 1fr;
 }
 
+.device-grid.list .device-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: start;
+  padding: 20px;
+}
+
+.device-grid.list .device-card-header {
+  grid-column: 1 / 2;
+  border-bottom: none;
+  padding: 0;
+}
+
+.device-grid.list .device-details {
+  grid-column: 2 / 3;
+  padding: 0;
+}
+
+.device-grid.list .device-actions {
+  grid-column: 3 / 4;
+  padding: 0;
+  flex-direction: column;
+}
+
+.device-grid.list .qr-container {
+  grid-column: 3 / 4;
+  grid-row: 2 / 3;
+  border-top: none;
+  background: none;
+  padding: 10px 0;
+}
+
+.device-grid.list .qr-image {
+  width: 150px;
+  height: 150px;
+}
+
 .device-card {
   background-color: var(--card-color);
   border-radius: 10px;

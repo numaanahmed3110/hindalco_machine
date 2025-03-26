@@ -329,3 +329,85 @@
   color: #64748b;
   max-width: 400px;
 }
+
+
+@media screen and (max-width: 768px) {
+  .device-template-card {
+    width: 95%;
+    padding: 1rem;
+    margin: 1rem auto;
+  }
+
+  .device-template-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .status-badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.8rem;
+    right: 1rem;
+  }
+
+  .device-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .detail-item {
+    margin-bottom: 1rem;
+  }
+
+  .detail-label {
+    font-size: 0.8rem;
+  }
+
+  .detail-value {
+    font-size: 1rem;
+  }
+
+  .gallery-image-container {
+    width: 100%;
+  }
+
+  .maintenance-record {
+    flex-direction: column;
+    padding: 0.8rem;
+  }
+
+  .maintenance-date {
+    margin-bottom: 0.5rem;
+  }
+
+  .device-template-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .device-template-header {
+    padding: 1rem;
+  }
+
+  .device-template-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .device-image {
+    max-height: 200px;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+}

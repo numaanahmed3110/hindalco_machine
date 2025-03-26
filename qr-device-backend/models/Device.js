@@ -32,7 +32,8 @@ const deviceSchema = new mongoose.Schema({
         technician: String,
         cost: Number
     }],
-    qrCode: String // Store the generated QR code URL or data
+    qrCode: String, // Store the generated QR code URL or data
+    tutorialVideo: String // Store YouTube video URL for machine operation tutorial
 }, {
     timestamps: true // Adds createdAt and updatedAt fields
 });
