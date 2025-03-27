@@ -21,7 +21,6 @@ const MaintenanceModal = ({
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
     try {
       const response = await axios.post(
         `https://hindalco-machine.onrender.com/device/${deviceId}/maintenance`,
