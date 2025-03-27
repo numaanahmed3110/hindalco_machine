@@ -12,26 +12,7 @@ const DeviceTemplate = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
-  const [isMaintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
-
-  const handleMaintenanceSubmit = async (maintenanceData) => {
-    try {
-      const { data } = await axios.post(
-        `https://hindalco-machine.onrender.com/device/${id}/maintenance`,
-        maintenanceData
-      );
-      setDevice({
-        ...device,
-        maintenanceHistory: [
-          data.maintenanceRecord || maintenanceData,
-          ...(device.maintenanceHistory || [])
-        ]
-      });
-    } catch (error) {
-      console.error("Error updating maintenance:", error);
-      alert("Failed to update maintenance. Please try again.");
-    }
-  };
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -105,27 +86,25 @@ const DeviceTemplate = () => {
       </div>
 
       <div className="device-template-card">
-        <div className="device-header-section">
-          <div className="device-image-container">
-            <img
-              src={getPrimaryImage()}
-              alt={device.name}
-              className="device-image"
-            />
-          </div>
-          <div className="device-title-section">
-            <h2 className="device-name">{device.name}</h2>
-            <span className="model-badge">{device.model}</span>
-            {device.tutorialVideo && (
-              <button
-                className="tutorial-button safety-button"
-                onClick={() => setIsTutorialOpen(true)}
-              >
-                <span className="safety-icon">🎥</span>
-                Watch Safety Tutorial
-              </button>
-            )}
-          </div>
+        <div className="device-image-container">
+          <img
+            src={getPrimaryImage()}
+            alt={device.name}
+            className="device-image"
+          />
+        </div>
+
+        <div className="device-template-title">
+          <h2>{device.name}</h2>
+          <span className="model-badge">{device.model}</span>
+          {device.tutorialVideo && (
+            <button
+              className="tutorial-button"
+              onClick={() => setIsTutorialOpen(true)}
+            >
+              Watch Tutorial
+            </button>
+          )}
         </div>
 
         <TutorialModal
@@ -236,15 +215,7 @@ const DeviceTemplate = () => {
 
         {activeTab === "maintenance" && (
           <div className="device-template-details">
-            <div className="maintenance-header">
-              <h3 className="section-title">Maintenance History</h3>
-              <button 
-                className="action-button primary" 
-                onClick={() => setMaintenanceModalOpen(true)}
-              >
-                Update Maintenance
-              </button>
-            </div>
+            <h3 className="section-title">Maintenance History</h3>
 
             {device.maintenanceHistory &&
             device.maintenanceHistory.length > 0 ? (
@@ -259,8 +230,8 @@ const DeviceTemplate = () => {
                         {record.description}
                       </p>
                       <div className="maintenance-meta">
-                        <span className="designation">
-                          Designation: {record.designation}
+                        <span className="technician">
+                          Technician: {record.technician}
                         </span>
                         <span className="cost">
                           Cost: ${record.cost.toLocaleString()}
@@ -277,17 +248,29 @@ const DeviceTemplate = () => {
         )}
 
         <div className="device-template-actions">
-          <div className="action-buttons-group">
-            <button className="action-button primary">
-              <span className="action-icon">⚠️</span>
-              Report Issue
+          <button className="action-button primary">Report Issue</button>
+          <button
+            className="action-button"
+            onClick={() => setIsMaintenanceModalOpen(true)}
+          >
+            Add Maintenance
+          </button>
+          {device.tutorialVideo && (
+            <button
+              className="action-button"
+              onClick={() => setIsTutorialOpen(true)}
+            >
+              Watch Tutorial
             </button>
-            <button className="action-button secondary">
-              <span className="action-icon">🔧</span>
-              Request Service
-            </button>
-          </div>
+          )}
         </div>
+
+        <MaintenanceModal
+          isOpen={isMaintenanceModalOpen}
+          onClose={() => setIsMaintenanceModalOpen(false)}
+          deviceId={id}
+          onMaintenanceUpdate={(updatedDevice) => setDevice(updatedDevice)}
+        />
 
         {device.tutorialVideo && (
           <TutorialModal
@@ -296,12 +279,6 @@ const DeviceTemplate = () => {
             onClose={() => setIsTutorialOpen(false)}
           />
         )}
-
-        <MaintenanceModal
-          isOpen={isMaintenanceModalOpen}
-          onClose={() => setMaintenanceModalOpen(false)}
-          onSubmit={handleMaintenanceSubmit}
-        />
       </div>
 
       <div className="device-template-footer">
