@@ -1,23 +1,46 @@
-import React, { useState } from 'react';
-import './MaintenanceModal.css';
+import React, { useState } from "react";
+import axios from "axios";
+import "./MaintenanceModal.css";
 
-const MaintenanceModal = ({ isOpen, onClose, onSubmit }) => {
+const MaintenanceModal = ({
+  isOpen,
+  onClose,
+  deviceId,
+  onMaintenanceUpdate,
+}) => {
   const [formData, setFormData] = useState({
-    designation: '',
-    cost: '',
-    description: ''
+    designation: "",
+    cost: "",
+    description: "",
+    date: new Date().toISOString().split("T")[0],
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const maintenanceData = {
-      ...formData,
-      date: new Date().toISOString(),
-      cost: parseFloat(formData.cost)
-    };
-    onSubmit(maintenanceData);
-    setFormData({ designation: '', cost: '', description: '' });
-    onClose();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await axios.post(
+        `https://hindalco-machine.onrender.com/device/${deviceId}/maintenance`,
+        {
+          designation: formData.designation,
+          cost: parseFloat(formData.cost),
+          description: formData.description,
+          date: formData.date,
+        }
+      );
+
+      // Update the parent component with the new device data
+      onMaintenanceUpdate(response.data);
+      setIsSubmitting(false);
+      onClose();
+    } catch (error) {
+      console.error("Error submitting maintenance:", error);
+      setError("Failed to submit maintenance record");
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -27,7 +50,9 @@ const MaintenanceModal = ({ isOpen, onClose, onSubmit }) => {
       <div className="maintenance-modal">
         <div className="modal-header">
           <h3>Update Maintenance</h3>
-          <button className="close-button" onClick={onClose}>&times;</button>
+          <button className="close-button" onClick={onClose}>
+            &times;
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="maintenance-form">
           <div className="form-group">
@@ -36,7 +61,9 @@ const MaintenanceModal = ({ isOpen, onClose, onSubmit }) => {
               type="text"
               id="designation"
               value={formData.designation}
-              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, designation: e.target.value })
+              }
               required
               placeholder="Enter designation"
             />
@@ -47,7 +74,9 @@ const MaintenanceModal = ({ isOpen, onClose, onSubmit }) => {
               type="number"
               id="cost"
               value={formData.cost}
-              onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, cost: e.target.value })
+              }
               required
               min="0"
               step="0.01"
@@ -59,15 +88,43 @@ const MaintenanceModal = ({ isOpen, onClose, onSubmit }) => {
             <textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               required
               placeholder="Enter maintenance summary"
               rows="4"
             />
           </div>
+          <div className="form-group">
+            <label htmlFor="date">Date</label>
+            <input
+              type="date"
+              id="date"
+              value={formData.date}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
+              required
+            />
+          </div>
+          {error && <div className="error-message">{error}</div>}
           <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={onClose}>Cancel</button>
-            <button type="submit" className="submit-button">Submit</button>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="submit-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </button>
           </div>
         </form>
       </div>

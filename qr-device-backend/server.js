@@ -34,7 +34,13 @@ app.post("/add-device", async (req, res) => {
     const { name, model, serialNumber, details, tutorialVideo } = req.body;
 
     // Create a new device entry
-    const newDevice = new Device({ name, model, serialNumber, details, tutorialVideo });
+    const newDevice = new Device({
+      name,
+      model,
+      serialNumber,
+      details,
+      tutorialVideo,
+    });
 
     // Generate a QR code that points to our frontend device viewer
     // IMPORTANT: Change this URL to your production URL when deployed
@@ -73,6 +79,35 @@ app.get("/device/:id", async (req, res) => {
     res.json(device);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Add maintenance record to a device
+app.post("/device/:id/maintenance", async (req, res) => {
+  try {
+    const device = await Device.findById(req.params.id);
+    if (!device) {
+      return res.status(404).json({ error: "Device not found" });
+    }
+
+    const { designation, cost, description, date } = req.body;
+
+    // Create new maintenance record
+    const maintenanceRecord = {
+      date: new Date(date),
+      description,
+      technician: designation,
+      cost,
+    };
+
+    // Add to maintenance history
+    device.maintenanceHistory.push(maintenanceRecord);
+    await device.save();
+
+    res.json(device);
+  } catch (error) {
+    console.error("Error updating maintenance:", error);
+    res.status(500).json({ error: "Failed to update maintenance" });
   }
 });
 
