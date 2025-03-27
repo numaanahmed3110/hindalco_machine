@@ -14,30 +14,33 @@ const MaintenanceModal = ({
     description: "",
     date: new Date().toISOString().split("T")[0],
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
     try {
       const response = await axios.post(
         `https://hindalco-machine.onrender.com/device/${deviceId}/maintenance`,
         {
-          ...formData,
+          designation: formData.designation,
           cost: parseFloat(formData.cost),
+          description: formData.description,
+          date: formData.date,
         }
       );
 
-      if (response.data) {
-        onMaintenanceUpdate(response.data);
-        setFormData({
-          designation: "",
-          cost: "",
-          description: "",
-          date: new Date().toISOString().split("T")[0],
-        });
-        onClose();
-      }
+      // Update the parent component with the new device data
+      onMaintenanceUpdate(response.data);
+      setIsSubmitting(false);
+      onClose();
     } catch (error) {
-      console.error("Error updating maintenance:", error);
+      console.error("Error submitting maintenance:", error);
+      setError("Failed to submit maintenance record");
+      setIsSubmitting(false);
     }
   };
 
@@ -106,12 +109,22 @@ const MaintenanceModal = ({
               required
             />
           </div>
+          {error && <div className="error-message">{error}</div>}
           <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={onClose}>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="submit-button">
-              Submit
+            <button
+              type="submit"
+              className="submit-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </form>
