@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import "./DeviceTemplate.css";
 import TutorialModal from "./TutorialModal";
-import MaintenanceModal from "./MaintenanceModal";
 
 const DeviceTemplate = () => {
   const { id } = useParams();
@@ -12,7 +11,6 @@ const DeviceTemplate = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
-  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -249,28 +247,16 @@ const DeviceTemplate = () => {
 
         <div className="device-template-actions">
           <button className="action-button primary">Report Issue</button>
-          <button
-            className="action-button"
-            onClick={() => setIsMaintenanceModalOpen(true)}
-          >
-            Add Maintenance
-          </button>
+          <button className="action-button">Request Service</button>
           {device.tutorialVideo && (
-            <button
-              className="action-button"
+            <button 
+              className="action-button" 
               onClick={() => setIsTutorialOpen(true)}
             >
               Watch Tutorial
             </button>
           )}
         </div>
-
-        <MaintenanceModal
-          isOpen={isMaintenanceModalOpen}
-          onClose={() => setIsMaintenanceModalOpen(false)}
-          deviceId={id}
-          onMaintenanceUpdate={(updatedDevice) => setDevice(updatedDevice)}
-        />
 
         {device.tutorialVideo && (
           <TutorialModal
