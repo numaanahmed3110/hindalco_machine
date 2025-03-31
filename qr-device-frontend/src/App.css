@@ -22,7 +22,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--background-color);
   color: var(--text-primary);
   line-height: 1.6;
@@ -184,7 +184,7 @@ body {
 
 .device-grid.list .device-details {
   grid-column: 2 / 3;
-  padding: 0;
+  padding: 0 0 0 40px;
 }
 
 .device-grid.list .device-actions {
@@ -220,7 +220,7 @@ body {
 }
 
 .device-card-header {
-  padding: 20px;
+  padding: 24px 20px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
 }
@@ -228,7 +228,7 @@ body {
 .device-name {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin: 12px 0 4px;
 }
 
 .device-model {
@@ -297,7 +297,8 @@ body {
   gap: 10px;
 }
 
-.qr-btn, .details-btn {
+.qr-btn,
+.details-btn {
   flex: 1;
   padding: 10px;
   border-radius: 6px;

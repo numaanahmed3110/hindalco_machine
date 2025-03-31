@@ -9,7 +9,7 @@ const MaintenanceModal = ({
   onMaintenanceUpdate,
 }) => {
   const [formData, setFormData] = useState({
-    designation: "",
+    name: "",
     cost: "",
     description: "",
     date: new Date().toISOString().split("T")[0],
@@ -25,7 +25,7 @@ const MaintenanceModal = ({
       const response = await axios.post(
         `https://hindalco-machine.onrender.com/device/${deviceId}/maintenance`,
         {
-          designation: formData.designation,
+          name: formData.name,
           cost: parseFloat(formData.cost),
           description: formData.description,
           date: formData.date,
@@ -56,16 +56,16 @@ const MaintenanceModal = ({
         </div>
         <form onSubmit={handleSubmit} className="maintenance-form">
           <div className="form-group">
-            <label htmlFor="designation">Designation</label>
+            <label htmlFor="name">Name</label>
             <input
               type="text"
-              id="designation"
-              value={formData.designation}
+              id="name"
+              value={formData.name}
               onChange={(e) =>
-                setFormData({ ...formData, designation: e.target.value })
+                setFormData({ ...formData, name: e.target.value })
               }
               required
-              placeholder="Enter designation"
+              placeholder="Enter maintainers name"
             />
           </div>
           <div className="form-group">
@@ -111,19 +111,19 @@ const MaintenanceModal = ({
           {error && <div className="error-message">{error}</div>}
           <div className="form-actions">
             <button
+              type="submit"
+              className="submit-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </button>
+            <button
               type="button"
               className="cancel-button"
               onClick={onClose}
               disabled={isSubmitting}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="submit-button"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </form>
