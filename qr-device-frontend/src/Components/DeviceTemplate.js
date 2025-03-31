@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import "./DeviceTemplate.css";
 import TutorialModal from "./TutorialModal";
+import MaintenanceModal from "./MaintenanceModal";
+import WarrantyModal from "./WarrantyModal";
 
 const DeviceTemplate = () => {
   const { id } = useParams();
@@ -11,6 +13,8 @@ const DeviceTemplate = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
+  const [isWarrantyModalOpen, setIsWarrantyModalOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -186,8 +190,21 @@ const DeviceTemplate = () => {
               <span className="detail-label">Warranty Expiration</span>
               <span className="detail-value">
                 {formatDate(device.warrantyExpiration)}
+                <button
+                  className="tutorial-button"
+                  onClick={() => setIsWarrantyModalOpen(true)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Extend Warranty
+                </button>
               </span>
             </div>
+            <WarrantyModal
+              isOpen={isWarrantyModalOpen}
+              onClose={() => setIsWarrantyModalOpen(false)}
+              deviceId={id}
+              onWarrantyUpdate={(updatedDevice) => setDevice(updatedDevice)}
+            />
 
             <div className="detail-item">
               <span className="detail-label">Additional Images</span>
@@ -215,6 +232,15 @@ const DeviceTemplate = () => {
           <div className="device-template-details">
             <h3 className="section-title">Maintenance History</h3>
 
+            <div className="maintenance-actions">
+              <button
+                className="action-button update-maintenance"
+                onClick={() => setIsMaintenanceModalOpen(true)}
+              >
+                Add Maintenance Record
+              </button>
+            </div>
+
             {device.maintenanceHistory &&
             device.maintenanceHistory.length > 0 ? (
               <div className="maintenance-history">
@@ -229,7 +255,7 @@ const DeviceTemplate = () => {
                       </p>
                       <div className="maintenance-meta">
                         <span className="technician">
-                          Technician: {record.technician}
+                          Technician: {record.name}
                         </span>
                         <span className="cost">
                           Cost: ${record.cost.toLocaleString()}
@@ -245,18 +271,23 @@ const DeviceTemplate = () => {
           </div>
         )}
 
-        <div className="device-template-actions">
-          <button className="action-button primary">Report Issue</button>
-          <button className="action-button">Request Service</button>
+        {/* <div className="device-template-actions">
           {device.tutorialVideo && (
-            <button 
-              className="action-button" 
+            <button
+              className="action-button"
               onClick={() => setIsTutorialOpen(true)}
             >
               Watch Tutorial
             </button>
           )}
-        </div>
+        </div> */}
+
+        <MaintenanceModal
+          isOpen={isMaintenanceModalOpen}
+          onClose={() => setIsMaintenanceModalOpen(false)}
+          deviceId={id}
+          onMaintenanceUpdate={(updatedDevice) => setDevice(updatedDevice)}
+        />
 
         {device.tutorialVideo && (
           <TutorialModal

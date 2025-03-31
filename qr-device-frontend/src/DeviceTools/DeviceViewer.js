@@ -28,7 +28,8 @@ const DeviceViewer = () => {
       });
   }, [id]);
 
-  if (loading) return <div className="loading">Loading device information...</div>;
+  if (loading)
+    return <div className="loading">Loading device information...</div>;
   if (error) return <div className="error">Error: {error}</div>;
   if (!device) return <div className="error">No device found</div>;
 
@@ -39,23 +40,26 @@ const DeviceViewer = () => {
           <h2>{device.name}</h2>
           <span className="model-badge">{device.model}</span>
         </div>
-        
+
         <div className="device-details">
           <div className="detail-row">
             <span className="detail-label">Serial Number:</span>
             <span className="detail-value">{device.serialNumber}</span>
           </div>
-          
+
           <div className="detail-row">
             <span className="detail-label">Details:</span>
             <span className="detail-value">{device.details}</span>
           </div>
         </div>
-        
+
         <div className="device-actions">
-          <a href="#" className="action-button primary">Report Issue</a>
-          <a href="#" className="action-button">Maintenance History</a>
-          <a href="#" className="action-button">Documentation</a>
+          <a href="#" className="action-button">
+            Maintenance History
+          </a>
+          <a href="#" className="action-button">
+            Documentation
+          </a>
         </div>
       </div>
     </div>
