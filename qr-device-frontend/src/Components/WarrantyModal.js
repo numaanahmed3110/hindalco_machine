@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./MaintenanceModal.css";
+import { withRoleCheck } from "./ClerkProvider";
 
-const WarrantyModal = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
+const WarrantyModalBase = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
   const [newWarrantyDate, setNewWarrantyDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -78,4 +79,8 @@ const WarrantyModal = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
   );
 };
 
+const WarrantyModal = withRoleCheck(WarrantyModalBase, [
+  "maintainer",
+  "administrator",
+]);
 export default WarrantyModal;

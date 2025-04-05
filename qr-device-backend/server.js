@@ -2,22 +2,53 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const QRCode = require("qrcode");
+const { Clerk } = require("@clerk/clerk-sdk-node");
 const Device = require("./models/Device");
+const User = require("./models/User");
+const { requireAuth, roles } = require("./middleware/auth");
+
+// Initialize Clerk
+const clerk = new Clerk(process.env.CLERK_SECRET_KEY);
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "https://hindalco-machine.vercel.app",
+    credentials: true,
+  })
+);
 app.use(express.json());
+
+// Webhook endpoint for Clerk user creation
+app.post("/webhook/clerk", async (req, res) => {
+  try {
+    const evt = req.body;
+    if (evt.type === "user.created") {
+      const { id, email_addresses, first_name, last_name } = evt.data;
+
+      const newUser = new User({
+        clerkId: id,
+        email: email_addresses[0].email_address,
+        firstName: first_name,
+        lastName: last_name,
+        role: "user", // Default role
+      });
+
+      await newUser.save();
+    }
+    res.json({ received: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 const startServer = async () => {
   try {
     await mongoose.connect(
-      "mongodb+srv://affanpics:affanaffan@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test",
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      },
-      console.log("Connected to MongoDB")
+      "mongodb+srv://affanpics:affanaffan@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test"
     );
+    console.log("Connected to MongoDB");
 
     app.listen(7349, () => {
       console.log(`Server running on port 7349`);
@@ -29,12 +60,18 @@ const startServer = async () => {
 
 startServer();
 
-app.post("/add-device", async (req, res) => {
+app.post("/add-device", requireAuth, roles.requireAdmin, async (req, res) => {
   try {
     const { name, model, serialNumber, details, tutorialVideo } = req.body;
 
     // Create a new device entry
-    const newDevice = new Device({ name, model, serialNumber, details, tutorialVideo });
+    const newDevice = new Device({
+      name,
+      model,
+      serialNumber,
+      details,
+      tutorialVideo,
+    });
 
     // Generate a QR code that points to our frontend device viewer
     // IMPORTANT: Change this URL to your production URL when deployed
@@ -52,7 +89,7 @@ app.post("/add-device", async (req, res) => {
   }
 });
 
-app.get("/devices", async (req, res) => {
+app.get("/devices", requireAuth, roles.requireUser, async (req, res) => {
   try {
     const devices = await Device.find();
     // Fetch all devices from MongoDB
@@ -64,7 +101,7 @@ app.get("/devices", async (req, res) => {
 });
 
 // Add a new route to get a single device by ID
-app.get("/device/:id", async (req, res) => {
+app.get("/device/:id", requireAuth, roles.requireUser, async (req, res) => {
   try {
     const device = await Device.findById(req.params.id);
     if (!device) {
