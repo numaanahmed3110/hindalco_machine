@@ -158,7 +158,7 @@ const DeviceInventory = () => {
             <h3>{selectedDevice.name} - QR Code</h3>
             <div className="qr-code-container">
               <QRCodeSVG
-                value={`${window.location.origin}/device-view/${selectedDevice._id}`}
+                value={`https://hindalco-machine.vercel.app/device-view/${selectedDevice._id}`}
                 size={256}
                 level="H"
                 includeMargin={true}
