@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUserRole } from "./ClerkProvider";
 import "./DeviceTemplate.css";
 import TutorialModal from "./TutorialModal";
 import MaintenanceModal from "./MaintenanceModal";
@@ -16,20 +18,39 @@ const DeviceTemplate = () => {
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isWarrantyModalOpen, setIsWarrantyModalOpen] = useState(false);
 
+  const { user } = useUser();
+  const { getToken } = useAuth();
+  const userRole = useUserRole();
+
   useEffect(() => {
-    setLoading(true);
-    axios
-      .get(`https://hindalco-machine.onrender.com/device/${id}`)
-      .then((response) => {
+    const fetchDevice = async () => {
+      setLoading(true);
+      try {
+        if (!user) throw new Error("No authenticated user");
+        const token = await getToken();
+        if (!token) throw new Error("Failed to get authentication token");
+
+        const response = await axios.get(
+          `https://hindalco-machine.onrender.com/device/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setDevice(response.data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error fetching device:", err);
         setError("Failed to load device information");
+      } finally {
         setLoading(false);
-      });
-  }, [id]);
+      }
+    };
+
+    if (user) {
+      fetchDevice();
+    }
+  }, [id, user, getToken]);
 
   if (loading) {
     return (
@@ -190,13 +211,15 @@ const DeviceTemplate = () => {
               <span className="detail-label">Warranty Expiration</span>
               <span className="detail-value">
                 {formatDate(device.warrantyExpiration)}
-                <button
-                  className="tutorial-button"
-                  onClick={() => setIsWarrantyModalOpen(true)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Extend Warranty
-                </button>
+                {userRole === "administrator" && (
+                  <button
+                    className="tutorial-button"
+                    onClick={() => setIsWarrantyModalOpen(true)}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Extend Warranty
+                  </button>
+                )}
               </span>
             </div>
             <WarrantyModal
@@ -233,37 +256,41 @@ const DeviceTemplate = () => {
             <h3 className="section-title">Maintenance History</h3>
 
             <div className="maintenance-actions">
-              <button
-                className="action-button update-maintenance"
-                onClick={() => setIsMaintenanceModalOpen(true)}
-              >
-                Add Maintenance Record
-              </button>
+              {(userRole === "administrator" || userRole === "maintainer") && (
+                <button
+                  className="action-button update-maintenance"
+                  onClick={() => setIsMaintenanceModalOpen(true)}
+                >
+                  Add Maintenance Record
+                </button>
+              )}
             </div>
 
             {device.maintenanceHistory &&
             device.maintenanceHistory.length > 0 ? (
               <div className="maintenance-history">
-                {device.maintenanceHistory.map((record, index) => (
-                  <div key={index} className="maintenance-record">
-                    <div className="maintenance-date">
-                      {formatDate(record.date)}
-                    </div>
-                    <div className="maintenance-details">
-                      <p className="maintenance-description">
-                        {record.description}
-                      </p>
-                      <div className="maintenance-meta">
-                        <span className="technician">
-                          Technician: {record.name}
-                        </span>
-                        <span className="cost">
-                          Cost: ${record.cost.toLocaleString()}
-                        </span>
+                {[...device.maintenanceHistory]
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .map((record, index) => (
+                    <div key={index} className="maintenance-record">
+                      <div className="maintenance-date">
+                        {formatDate(record.date)}
+                      </div>
+                      <div className="maintenance-details">
+                        <p className="maintenance-description">
+                          {record.description}
+                        </p>
+                        <div className="maintenance-meta">
+                          <span className="technician">
+                            Technician: {record.name}
+                          </span>
+                          <span className="cost">
+                            Cost: ${record.cost.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             ) : (
               <p className="no-records">No maintenance records available</p>
