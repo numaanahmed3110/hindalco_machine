@@ -31,9 +31,9 @@ app.use(
           false
         );
       }
-      return callback(null, true);
+      return callback(null, origin);
     },
-    credentials: false,
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
       "Content-Type",
@@ -41,6 +41,8 @@ app.use(
       "X-Requested-With",
       "Accept",
       "Origin",
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Credentials",
     ],
     exposedHeaders: ["Content-Range", "X-Content-Range"],
     maxAge: 86400,
