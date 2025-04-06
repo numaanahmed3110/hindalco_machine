@@ -13,10 +13,21 @@ const clerk = new Clerk(process.env.CLERK_SECRET_KEY);
 const app = express();
 app.use(
   cors({
-    origin: ["https://hindalco-machine.vercel.app", "http://localhost:5173"],
+    origin: [
+      "https://hindalco-machine.vercel.app",
+      "http://localhost:5173",
+      "https://hindalco-machine.onrender.com",
+    ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+    maxAge: 86400,
   })
 );
 app.use(express.json());
