@@ -11,12 +11,41 @@ const { requireAuth, roles } = require("./middleware/auth");
 const clerk = new Clerk(process.env.CLERK_SECRET_KEY);
 
 const app = express();
+// CORS configuration with proper credentials handling
 app.use(
   cors({
-    origin: ["https://hindalco-machine.vercel.app", "http://localhost:5173"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "https://hindalco-machine.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://hindalco-machine.onrender.com",
+      ];
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        return callback(
+          new Error(
+            "The CORS policy for this site does not allow access from the specified Origin."
+          ),
+          false
+        );
+      }
+      return callback(null, true);
+    },
+    credentials: false,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+    maxAge: 86400,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 app.use(express.json());
