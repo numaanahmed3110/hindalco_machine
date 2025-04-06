@@ -31,7 +31,7 @@ app.use(
           false
         );
       }
-      return callback(null, origin);
+      return callback(null, true);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -43,6 +43,8 @@ app.use(
       "Origin",
       "Access-Control-Allow-Origin",
       "Access-Control-Allow-Credentials",
+      "Access-Control-Allow-Methods",
+      "Access-Control-Allow-Headers",
     ],
     exposedHeaders: ["Content-Range", "X-Content-Range"],
     maxAge: 86400,
@@ -76,18 +78,31 @@ app.post("/webhook/clerk", async (req, res) => {
   }
 });
 
+// Import CORS test routes
+const corsTestRoutes = require("./routes/corsTest");
+
+// Mount CORS test route
+app.use("/cors-test", corsTestRoutes);
+
 const startServer = async () => {
   try {
     await mongoose.connect(
-      "mongodb+srv://affanpics:affanaffan@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test"
+      "mongodb+srv://affanpics:affanaffan@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test",
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+      }
     );
     console.log("Connected to MongoDB");
 
     app.listen(7349, () => {
       console.log(`Server running on port 7349`);
+      console.log("CORS test endpoint available at /cors-test");
     });
   } catch (error) {
-    console.error("Error connecting to MongoDB", error);
+    console.error("Error connecting to MongoDB:", error.message);
+    process.exit(1); // Exit if MongoDB connection fails
   }
 };
 
