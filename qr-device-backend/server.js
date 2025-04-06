@@ -78,11 +78,13 @@ app.post("/webhook/clerk", async (req, res) => {
   }
 });
 
-// Import CORS test routes
+// Import routes
 const corsTestRoutes = require("./routes/corsTest");
+const deviceRoutes = require("./routes/deviceRoutes");
 
-// Mount CORS test route
+// Mount routes
 app.use("/cors-test", corsTestRoutes);
+app.use("/devices", deviceRoutes);
 
 const startServer = async () => {
   try {

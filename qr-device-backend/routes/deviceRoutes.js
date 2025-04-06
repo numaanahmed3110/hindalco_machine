@@ -4,6 +4,16 @@ const Device = require("../models/Device");
 const qr = require("qr-image");
 const { requireAuth, roles } = require("../middleware/auth");
 
+// Get all devices
+router.get("/", async (req, res) => {
+  try {
+    const devices = await Device.find();
+    res.json(devices);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching devices" });
+  }
+});
+
 // Generate QR Code for a device (including details)
 router.get("/qr/:id", async (req, res) => {
   try {
