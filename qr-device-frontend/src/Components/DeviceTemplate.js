@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useUser, useAuth } from "@clerk/clerk-react";
 import { useUserRole } from "./ClerkProvider";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import "./DeviceTemplate.css";
 import TutorialModal from "./TutorialModal";
 import MaintenanceModal from "./MaintenanceModal";
@@ -10,6 +10,10 @@ import WarrantyModal from "./WarrantyModal";
 
 const DeviceTemplate = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const { getToken } = useAuth();
+  const userRole = useUserRole();
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,19 +21,14 @@ const DeviceTemplate = () => {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isWarrantyModalOpen, setIsWarrantyModalOpen] = useState(false);
-
-  const { user } = useUser();
-  const { getToken } = useAuth();
-  const userRole = useUserRole();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
 
   useEffect(() => {
     const fetchDevice = async () => {
       setLoading(true);
       try {
-        if (!user) throw new Error("No authenticated user");
         const token = await getToken();
-        if (!token) throw new Error("Failed to get authentication token");
-
         const response = await axios.get(
           `https://hindalco-machine.onrender.com/device/${id}`,
           {
@@ -211,15 +210,28 @@ const DeviceTemplate = () => {
               <span className="detail-label">Warranty Expiration</span>
               <span className="detail-value">
                 {formatDate(device.warrantyExpiration)}
-                {userRole === "administrator" && (
-                  <button
-                    className="tutorial-button"
-                    onClick={() => setIsWarrantyModalOpen(true)}
-                    style={{ marginLeft: "10px" }}
-                  >
-                    Extend Warranty
-                  </button>
-                )}
+                <button
+                  className="tutorial-button"
+                  onClick={() => {
+                    if (!user) {
+                      setAuthMessage("Please login to extend warranty");
+                      setShowAuthModal(true);
+                    } else if (
+                      userRole !== "administrator" &&
+                      userRole !== "maintainer"
+                    ) {
+                      setAuthMessage(
+                        "You need administrator or maintainer access to extend warranty"
+                      );
+                      setShowAuthModal(true);
+                    } else {
+                      setIsWarrantyModalOpen(true);
+                    }
+                  }}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Extend Warranty
+                </button>
               </span>
             </div>
             <WarrantyModal
@@ -256,14 +268,27 @@ const DeviceTemplate = () => {
             <h3 className="section-title">Maintenance History</h3>
 
             <div className="maintenance-actions">
-              {(userRole === "administrator" || userRole === "maintainer") && (
-                <button
-                  className="action-button update-maintenance"
-                  onClick={() => setIsMaintenanceModalOpen(true)}
-                >
-                  Add Maintenance Record
-                </button>
-              )}
+              <button
+                className="action-button update-maintenance"
+                onClick={() => {
+                  if (!user) {
+                    setAuthMessage("Please login to add maintenance records");
+                    setShowAuthModal(true);
+                  } else if (
+                    userRole !== "administrator" &&
+                    userRole !== "maintainer"
+                  ) {
+                    setAuthMessage(
+                      "You need administrator or maintainer access to add maintenance records"
+                    );
+                    setShowAuthModal(true);
+                  } else {
+                    setIsMaintenanceModalOpen(true);
+                  }
+                }}
+              >
+                Add Maintenance Record
+              </button>
             </div>
 
             {device.maintenanceHistory &&
@@ -328,6 +353,38 @@ const DeviceTemplate = () => {
       <div className="device-template-footer">
         <p>Scan this device again to access this information in the future</p>
       </div>
+
+      {showAuthModal && (
+        <div className="maintenance-modal-overlay">
+          <div className="maintenance-modal">
+            <div className="modal-header">
+              <h3>Authentication Required</h3>
+              <button
+                className="close-button"
+                onClick={() => setShowAuthModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-content" style={{ padding: "20px" }}>
+              <p>{authMessage}</p>
+              {!user && (
+                <button
+                  className="submit-button"
+                  onClick={() => {
+                    navigate("/sign-in", {
+                      state: { returnUrl: `/device/${id}` },
+                    });
+                  }}
+                  style={{ marginTop: "15px" }}
+                >
+                  Login
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

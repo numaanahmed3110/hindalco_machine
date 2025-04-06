@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
 import { useUserRole } from "./ClerkProvider";
 import {
   FiGrid,
@@ -17,7 +17,7 @@ import "./DeviceInventory.css";
 
 const DeviceInventory = () => {
   const { user } = useUser();
-  const { getToken } = useAuth();
+
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,16 +31,8 @@ const DeviceInventory = () => {
       setLoading(true);
       try {
         if (!user) throw new Error("No authenticated user");
-        const token = await getToken();
-        if (!token) throw new Error("Failed to get authentication token");
-
         const response = await axios.get(
-          "https://hindalco-machine.onrender.com/devices",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          "https://hindalco-machine.onrender.com/devices"
         );
         setDevices(response.data);
       } catch (error) {
@@ -54,7 +46,7 @@ const DeviceInventory = () => {
     if (user) {
       fetchDevices();
     }
-  }, [user, getToken]);
+  }, [user]);
 
   const filteredDevices = devices.filter(
     (device) =>
@@ -81,11 +73,9 @@ const DeviceInventory = () => {
           />
         </div>
         <div className="header-actions">
-          {userRole && (
-            <div className="role-indicator">
-              <FiShield /> {userRole}
-            </div>
-          )}
+          <div className={`role-indicator ${userRole}`}>
+            <FiShield /> {userRole || "Guest"}
+          </div>
           {(userRole === "administrator" || userRole === "maintainer") && (
             <>
               <button className="action-button">
@@ -114,11 +104,12 @@ const DeviceInventory = () => {
           >
             <FiList /> List
           </button>
-          {userRole === "administrator" && (
-            <button className="add-device-button">
-              <FiPlus /> Add Device
-            </button>
-          )}
+          <button className="add-device-button" onClick={() => {}}>
+            <FiPlus /> Add Machine
+          </button>
+          <button className="add-device-button">
+            <FiPlus /> Add Device
+          </button>
         </div>
       </div>
 

@@ -37,14 +37,7 @@ function App() {
                 </RoleProtected>
               }
             />
-            <Route
-              path="/device-view/:id"
-              element={
-                <RoleProtected requiredRole="user">
-                  <DeviceTemplate />
-                </RoleProtected>
-              }
-            />
+            <Route path="/device-view/:id" element={<DeviceTemplate />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<Navigate to="/inventory" replace />} />
           </Routes>
