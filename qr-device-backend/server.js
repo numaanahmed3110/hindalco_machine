@@ -8,7 +8,7 @@ const User = require("./models/User");
 const { requireAuth, roles } = require("./middleware/auth");
 
 // Initialize Clerk
-const clerk = new Clerk(process.env.CLERK_SECRET_KEY);
+const clerk = new Clerk("sk_test_SiRztwfq0pArU7K57ECteGXtKAF3M06ynFCAGeImjJ");
 
 const app = express();
 // CORS configuration with proper credentials handling
