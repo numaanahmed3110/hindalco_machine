@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useUserRole } from "./ClerkProvider";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import apiClient from "../api/apiClient";
 import "./DeviceTemplate.css";
 import TutorialModal from "./TutorialModal";
 import MaintenanceModal from "./MaintenanceModal";
 import WarrantyModal from "./WarrantyModal";
+import { useAuth } from "../contexts/AuthContext";
 
 const DeviceTemplate = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useUser();
-  const { getToken } = useAuth();
-  const userRole = useUserRole();
+  const { user, role } = useAuth();
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,35 +18,44 @@ const DeviceTemplate = () => {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isWarrantyModalOpen, setIsWarrantyModalOpen] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
 
   useEffect(() => {
     const fetchDevice = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const token = await getToken();
-        const response = await axios.get(
-          `https://hindalco-machine.onrender.com/device/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        // Using API client with environment-based URL
+        const response = await apiClient.get(`/device/${id}`);
         setDevice(response.data);
+        setRetryCount(0);
       } catch (err) {
         console.error("Error fetching device:", err);
-        setError("Failed to load device information");
+        const errorMessage =
+          err.response?.status === 500
+            ? "Server error occurred. Please try again later."
+            : err.response?.status === 404
+            ? "Device not found. Please check the device ID."
+            : "Failed to load device information. Please check your connection.";
+        setError(errorMessage);
       } finally {
         setLoading(false);
+        setIsRetrying(false);
       }
     };
 
-    if (user) {
-      fetchDevice();
+    // Check if we have a returnUrl in the query parameters
+    const queryParams = new URLSearchParams(window.location.search);
+    if (queryParams.has("returnUrl")) {
+      // User has been redirected back after login, clear the parameter
+      navigate(`/device-view/${id}`, { replace: true });
     }
-  }, [id, user, getToken]);
+
+    fetchDevice();
+  }, [id, retryCount, navigate]);
 
   if (loading) {
     return (
@@ -64,8 +70,18 @@ const DeviceTemplate = () => {
     return (
       <div className="device-template-error">
         <div className="error-icon">!</div>
-        <h2>Device Not Found</h2>
+        <h2>Error Loading Device</h2>
         <p>{error || "The requested device could not be found"}</p>
+        <button
+          className="retry-button"
+          onClick={() => {
+            setIsRetrying(true);
+            setRetryCount((prev) => prev + 1);
+          }}
+          disabled={isRetrying}
+        >
+          {isRetrying ? "Retrying..." : "Retry"}
+        </button>
       </div>
     );
   }
@@ -89,17 +105,6 @@ const DeviceTemplate = () => {
     }
     return "https://via.placeholder.com/300x200?text=No+Image+Available";
   };
-
-  // Get status badge class
-  // const getStatusClass = () => {
-  //   const statusMap = {
-  //     'active': 'status-active',
-  //     'maintenance': 'status-maintenance',
-  //     'retired': 'status-retired',
-  //     'lost': 'status-lost'
-  //   };
-  //   return statusMap[device.status] || 'status-unknown';
-  // };
 
   return (
     <div className="device-template">
@@ -208,31 +213,49 @@ const DeviceTemplate = () => {
 
             <div className="detail-item">
               <span className="detail-label">Warranty Expiration</span>
-              <span className="detail-value">
+              <div
+                className="detail-value"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 {formatDate(device.warrantyExpiration)}
                 <button
-                  className="tutorial-button"
+                  className="warranty-button"
                   onClick={() => {
                     if (!user) {
-                      setAuthMessage("Please login to extend warranty");
-                      setShowAuthModal(true);
-                    } else if (
-                      userRole !== "administrator" &&
-                      userRole !== "maintainer"
-                    ) {
+                      // Redirect to login page with return URL
+                      navigate(`/login?returnUrl=/device-view/${id}`);
+                      return;
+                    }
+
+                    // Check role-based permissions
+                    if (role !== "admin") {
+                      // Show unauthorized message for non-admin users
                       setAuthMessage(
-                        "You need administrator or maintainer access to extend warranty"
+                        "Only administrators can extend warranty."
                       );
                       setShowAuthModal(true);
                     } else {
+                      // Admin can access warranty modal
                       setIsWarrantyModalOpen(true);
                     }
                   }}
-                  style={{ marginLeft: "10px" }}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "12px",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
                 >
                   Extend Warranty
                 </button>
-              </span>
+              </div>
             </div>
             <WarrantyModal
               isOpen={isWarrantyModalOpen}
@@ -272,17 +295,16 @@ const DeviceTemplate = () => {
                 className="action-button update-maintenance"
                 onClick={() => {
                   if (!user) {
-                    setAuthMessage("Please login to add maintenance records");
-                    setShowAuthModal(true);
-                  } else if (
-                    userRole !== "administrator" &&
-                    userRole !== "maintainer"
-                  ) {
+                    // Redirect to login page with return URL
+                    navigate(`/login?returnUrl=/device-view/${id}`);
+                  } else if (role !== "admin" && role !== "maintainer") {
+                    // Show unauthorized message for non-admin/maintainer users
                     setAuthMessage(
-                      "You need administrator or maintainer access to add maintenance records"
+                      "Only administrators and maintainers can add maintenance records."
                     );
                     setShowAuthModal(true);
                   } else {
+                    // Admin or maintainer can access maintenance modal
                     setIsMaintenanceModalOpen(true);
                   }
                 }}
@@ -323,17 +345,6 @@ const DeviceTemplate = () => {
           </div>
         )}
 
-        {/* <div className="device-template-actions">
-          {device.tutorialVideo && (
-            <button
-              className="action-button"
-              onClick={() => setIsTutorialOpen(true)}
-            >
-              Watch Tutorial
-            </button>
-          )}
-        </div> */}
-
         <MaintenanceModal
           isOpen={isMaintenanceModalOpen}
           onClose={() => setIsMaintenanceModalOpen(false)}
@@ -354,37 +365,38 @@ const DeviceTemplate = () => {
         <p>Scan this device again to access this information in the future</p>
       </div>
 
-      {showAuthModal && (
-        <div className="maintenance-modal-overlay">
-          <div className="maintenance-modal">
-            <div className="modal-header">
-              <h3>Authentication Required</h3>
-              <button
-                className="close-button"
-                onClick={() => setShowAuthModal(false)}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-content" style={{ padding: "20px" }}>
-              <p>{authMessage}</p>
-              {!user && (
-                <button
-                  className="submit-button"
-                  onClick={() => {
-                    navigate("/sign-in", {
-                      state: { returnUrl: `/device/${id}` },
-                    });
-                  }}
-                  style={{ marginTop: "15px" }}
-                >
-                  Login
-                </button>
-              )}
-            </div>
+      {/* Auth Modal for displaying permission messages */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        message={authMessage}
+      />
+    </div>
+  );
+};
+
+// Add AuthModal component at the end of the file, before the export statement
+const AuthModal = ({ isOpen, onClose, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="maintenance-modal-overlay">
+      <div className="maintenance-modal">
+        <div className="modal-header">
+          <h3>Authentication Required</h3>
+          <button className="close-button" onClick={onClose}>
+            &times;
+          </button>
+        </div>
+        <div className="auth-message">
+          <p>{message}</p>
+          <div className="form-actions">
+            <button className="submit-button" onClick={onClose}>
+              OK
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

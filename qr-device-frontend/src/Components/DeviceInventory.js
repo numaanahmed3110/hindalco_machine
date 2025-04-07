@@ -1,52 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useUser } from "@clerk/clerk-react";
-import { useUserRole } from "./ClerkProvider";
-import {
-  FiGrid,
-  FiSearch,
-  FiDownload,
-  FiPrinter,
-  FiPlus,
-  FiShield,
-  FiList,
-  FiX,
-} from "react-icons/fi";
-import { QRCodeSVG } from "qrcode.react";
+import { useNavigate } from "react-router-dom";
 import "./DeviceInventory.css";
+import { FiSearch, FiGrid, FiList, FiPlus, FiX } from "react-icons/fi";
+import { QRCodeSVG } from "qrcode.react";
+import { useAuth } from "../contexts/AuthContext";
 
 const DeviceInventory = () => {
-  const { user } = useUser();
-
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid");
-  const userRole = useUserRole();
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [error, setError] = useState(null);
+  const { role } = useAuth();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDevices = async () => {
       setLoading(true);
       try {
-        if (!user) throw new Error("No authenticated user");
         const response = await axios.get(
           "https://hindalco-machine.onrender.com/devices"
         );
         setDevices(response.data);
       } catch (error) {
         console.error("Error fetching devices:", error.message);
+        setError(error.message);
         setDevices([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) {
-      fetchDevices();
-    }
-  }, [user]);
+    fetchDevices();
+  }, []);
 
   const filteredDevices = devices.filter(
     (device) =>
@@ -58,34 +48,21 @@ const DeviceInventory = () => {
   return (
     <div className="app-container">
       <header className="app-header">
-        <div className="logo-container">
-          <h1>DeviceTrack</h1>
-          <span className="tagline">Industrial Equipment Management</span>
-        </div>
-        <div className="search-container">
-          <FiSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search devices..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-        </div>
-        <div className="header-actions">
-          <div className={`role-indicator ${userRole}`}>
-            <FiShield /> {userRole || "Guest"}
+        <div className="header-content">
+          <div className="header-left">
+            <h1>Device Inventory</h1>
+            <div className="role-badge">{role}</div>
           </div>
-          {(userRole === "administrator" || userRole === "maintainer") && (
-            <>
-              <button className="action-button">
-                <FiDownload /> Export
-              </button>
-              <button className="action-button">
-                <FiPrinter /> Print
-              </button>
-            </>
-          )}
+          <div className="search-bar">
+            <FiSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search devices..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="header-actions"></div>
         </div>
       </header>
 
@@ -104,10 +81,10 @@ const DeviceInventory = () => {
           >
             <FiList /> List
           </button>
-          <button className="add-device-button" onClick={() => {}}>
-            <FiPlus /> Add Machine
-          </button>
-          <button className="add-device-button">
+          <button
+            className="add-device-button"
+            onClick={() => navigate("/add-device")}
+          >
             <FiPlus /> Add Device
           </button>
         </div>
@@ -116,6 +93,11 @@ const DeviceInventory = () => {
       <main className="main-content">
         {loading ? (
           <div className="loading">Loading devices...</div>
+        ) : error ? (
+          <div className="error-message">
+            <p>Error: {error}</p>
+            <button onClick={() => window.location.reload()}>Retry</button>
+          </div>
         ) : (
           <div className={`device-grid ${viewMode}`}>
             {filteredDevices.map((device) => (
