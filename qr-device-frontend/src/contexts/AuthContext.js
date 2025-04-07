@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   supabase,
   getCurrentUser,
@@ -19,32 +25,35 @@ export const AuthProvider = ({ children }) => {
   const [sessionChecked, setSessionChecked] = useState(false);
 
   // Function to update user state with session data
-  const updateUserState = async (session) => {
-    try {
-      if (session) {
-        console.log("Updating user state with session", session.user.id);
-        const { user: currentUser } = await getCurrentUser();
-        const { role: userRole } = await getUserRole();
-        setUser(currentUser);
-        setRole(userRole);
+  const updateUserState = useCallback(
+    async (session) => {
+      try {
+        if (session) {
+          console.log("Updating user state with session", session.user.id);
+          const { user: currentUser } = await getCurrentUser();
+          const { role: userRole } = await getUserRole();
+          setUser(currentUser);
+          setRole(userRole);
 
-        // Store session expiry time for validation checks
-        localStorage.setItem("sessionExpiresAt", session.expires_at);
-      } else {
-        // Clear user state when no session exists
-        console.log("No session available, clearing user state");
+          // Store session expiry time for validation checks
+          localStorage.setItem("sessionExpiresAt", session.expires_at);
+        } else {
+          // Clear user state when no session exists
+          console.log("No session available, clearing user state");
+          setUser(null);
+          setRole(null);
+          localStorage.removeItem("sessionExpiresAt");
+        }
+      } catch (error) {
+        console.error("Error updating user state:", error.message);
+        // Handle authentication errors by clearing state
         setUser(null);
         setRole(null);
         localStorage.removeItem("sessionExpiresAt");
       }
-    } catch (error) {
-      console.error("Error updating user state:", error.message);
-      // Handle authentication errors by clearing state
-      setUser(null);
-      setRole(null);
-      localStorage.removeItem("sessionExpiresAt");
-    }
-  };
+    },
+    [setUser, setRole]
+  );
 
   // Handle user logout
   const logout = async () => {
@@ -164,10 +173,10 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [updateUserState]);
 
   // Function to check and refresh token if needed
-  const checkAndRefreshToken = async () => {
+  const checkAndRefreshToken = useCallback(async () => {
     try {
       const sessionExpiresAt = localStorage.getItem("sessionExpiresAt");
       // If session expires in less than 5 minutes (300 seconds), refresh it
@@ -189,7 +198,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Error refreshing token:", error);
       return false;
     }
-  };
+  }, [updateUserState]);
 
   // Set up periodic token refresh check
   useEffect(() => {

@@ -5,6 +5,7 @@ const QRCode = require("qrcode");
 const Device = require("./models/Device");
 
 const app = express();
+
 // CORS configuration with proper credentials handling
 app.use(
   cors({
@@ -41,7 +42,12 @@ app.use("/devices", deviceRoutes);
 const startServer = async () => {
   try {
     await mongoose.connect(
-      "mongodb+srv://affanpics:affanpics@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test"
+      "mongodb+srv://affanpics:affanaffan@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test",
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+      }
     );
     console.log("Connected to MongoDB");
 
@@ -71,7 +77,7 @@ app.post("/add-device", async (req, res) => {
     });
 
     // Generate a QR code that points to our frontend device viewer
-    // Hardcoded frontend URL instead of using environment variables
+    // Use FRONTEND_URL from environment variables for flexibility between environments
     const frontendUrl =
       "https://hindalco-machine.vercel.app" || "http://localhost:5173";
     const qrCodeData = `${frontendUrl}/device-tools/view/${newDevice._id}`;
