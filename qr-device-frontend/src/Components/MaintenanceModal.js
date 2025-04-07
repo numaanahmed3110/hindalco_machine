@@ -23,9 +23,9 @@ const MaintenanceModal = ({
     setError(null);
     try {
       const response = await axios.post(
-        `https://hindalco-machine.onrender.com/device/${deviceId}/maintenance`,
+        `https://hindalco-machine.onrender.com/devices/${deviceId}/maintenance`,
         {
-          name: formData.name,
+          technician: formData.name,
           cost: parseFloat(formData.cost),
           description: formData.description,
           date: formData.date,
