@@ -106,19 +106,6 @@ const DevicePage = () => {
     return `https://hindalco-machine.vercel.app/device-view/${deviceId}`;
   };
 
-  // Get status badge class and text
-  // const getStatusBadge = (device) => {
-  //   const statusMap = {
-  //     active: { class: "status-active", text: "Active" },
-  //     maintenance: { class: "status-maintenance", text: "Maintenance" },
-  //     retired: { class: "status-retired", text: "Retired" },
-  //     lost: { class: "status-lost", text: "Lost" }
-  //   };
-  //   const status = statusMap[device.status] || { class: "status-unknown", text: "Unknown" };
-  //   return (
-  //     <span className={`status-badge ${status.class}`}>{status.text}</span>
-  //   );
-  // };
 
   if (loading)
     return (

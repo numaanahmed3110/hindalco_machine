@@ -2,13 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const QRCode = require("qrcode");
-const { Clerk } = require("@clerk/clerk-sdk-node");
 const Device = require("./models/Device");
-const User = require("./models/User");
-const { requireAuth, roles } = require("./middleware/auth");
-
-// Initialize Clerk
-const clerk = new Clerk("sk_test_SiRztwfq0pArU7K57ECteGXtKAF3M06ynFCAGeImjJ");
 
 const app = express();
 // CORS configuration with proper credentials handling
@@ -36,30 +30,6 @@ app.use(
 );
 app.use(express.json());
 
-// Webhook endpoint for Clerk user creation
-app.post("/webhook/clerk", async (req, res) => {
-  try {
-    const evt = req.body;
-    if (evt.type === "user.created") {
-      const { id, email_addresses, first_name, last_name } = evt.data;
-
-      const newUser = new User({
-        clerkId: id,
-        email: email_addresses[0].email_address,
-        firstName: first_name,
-        lastName: last_name,
-        role: "user", // Default role
-      });
-
-      await newUser.save();
-    }
-    res.json({ received: true });
-  } catch (error) {
-    console.error("Webhook error:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Import routes
 const corsTestRoutes = require("./routes/corsTest");
 const deviceRoutes = require("./routes/deviceRoutes");
@@ -71,12 +41,7 @@ app.use("/devices", deviceRoutes);
 const startServer = async () => {
   try {
     await mongoose.connect(
-      "mongodb+srv://affanpics:affanaffan@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test",
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 5000,
-      }
+      "mongodb+srv://affanpics:affanpics@cluster0.jafgy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/test"
     );
     console.log("Connected to MongoDB");
 
@@ -92,7 +57,7 @@ const startServer = async () => {
 
 startServer();
 
-app.post("/add-device", requireAuth, roles.requireAdmin, async (req, res) => {
+app.post("/add-device", async (req, res) => {
   try {
     const { name, model, serialNumber, details, tutorialVideo } = req.body;
 
@@ -106,8 +71,10 @@ app.post("/add-device", requireAuth, roles.requireAdmin, async (req, res) => {
     });
 
     // Generate a QR code that points to our frontend device viewer
-    // IMPORTANT: Change this URL to your production URL when deployed
-    const qrCodeData = `https://hindalco-machine.vercel.app/device-tools/view/${newDevice._id}`;
+    // Hardcoded frontend URL instead of using environment variables
+    const frontendUrl =
+      "https://hindalco-machine.vercel.app" || "http://localhost:5173";
+    const qrCodeData = `${frontendUrl}/device-tools/view/${newDevice._id}`;
 
     const qrCodeImage = await QRCode.toDataURL(qrCodeData);
 
@@ -121,7 +88,7 @@ app.post("/add-device", requireAuth, roles.requireAdmin, async (req, res) => {
   }
 });
 
-app.get("/devices", requireAuth, roles.requireUser, async (req, res) => {
+app.get("/devices", async (req, res) => {
   try {
     const devices = await Device.find();
     // Fetch all devices from MongoDB
@@ -133,7 +100,7 @@ app.get("/devices", requireAuth, roles.requireUser, async (req, res) => {
 });
 
 // Add a new route to get a single device by ID
-app.get("/device/:id", requireAuth, roles.requireUser, async (req, res) => {
+app.get("/device/:id", async (req, res) => {
   try {
     const device = await Device.findById(req.params.id);
     if (!device) {
