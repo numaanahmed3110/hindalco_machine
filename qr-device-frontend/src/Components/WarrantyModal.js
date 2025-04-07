@@ -15,7 +15,7 @@ const WarrantyModal = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
     setError(null);
     try {
       const response = await axios.put(
-        `https://hindalco-machine.onrender.com/device/${deviceId}/warranty`,
+        `https://hindalco-machine.onrender.com/devices/${deviceId}/warranty`,
         {
           warrantyExpiration: newWarrantyDate,
         }
