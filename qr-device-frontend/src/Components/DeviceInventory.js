@@ -70,22 +70,22 @@ const DeviceInventory = () => {
         <h2>Device Inventory</h2>
         <div className="view-controls">
           <button
-            className={`view-button ${viewMode === "grid" ? "active" : ""}`}
+            className={`view-button modern ${
+              viewMode === "grid" ? "active" : ""
+            }`}
             onClick={() => setViewMode("grid")}
+            title="Grid View"
           >
-            <FiGrid /> Grid
+            <FiGrid />
           </button>
           <button
-            className={`view-button ${viewMode === "list" ? "active" : ""}`}
+            className={`view-button modern ${
+              viewMode === "list" ? "active" : ""
+            }`}
             onClick={() => setViewMode("list")}
+            title="List View"
           >
-            <FiList /> List
-          </button>
-          <button
-            className="add-device-button"
-            onClick={() => navigate("/add-device")}
-          >
-            <FiPlus /> Add Device
+            <FiList />
           </button>
         </div>
       </div>
