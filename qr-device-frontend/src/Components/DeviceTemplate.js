@@ -297,10 +297,10 @@ const DeviceTemplate = () => {
                   if (!user) {
                     // Redirect to login page with return URL
                     navigate(`/login?returnUrl=/device-view/${id}`);
-                  } else if (role !== "admin" && role !== "maintainer") {
-                    // Show unauthorized message for non-admin/maintainer users
+                  } else if (role !== "admin" && role !== "supervisor") {
+                    // Show unauthorized message for non-admin/supervisor users
                     setAuthMessage(
-                      "Only administrators and maintainers can add maintenance records."
+                      "Only administrators and supervisors can add maintenance records."
                     );
                     setShowAuthModal(true);
                   } else {

@@ -141,23 +141,26 @@ const Login = () => {
             {loading ? <span className="loading-spinner"></span> : "Log In"}
           </button>
 
-          <div style={{ textAlign: "center", marginTop: "1rem" }}>
-            Don't have an account?{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#007bff",
-                textDecoration: "underline",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              Sign up
-            </button>
-          </div>
+          {/* Only show signup option if not redirected from device view */}
+          {!returnUrl.includes("device-view") && (
+            <div style={{ textAlign: "center", marginTop: "1rem" }}>
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#007bff",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Sign up
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
