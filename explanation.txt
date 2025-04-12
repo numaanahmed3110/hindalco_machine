@@ -1,0 +1,133 @@
+Hindalco Industry - Machine QR Code Management System
+=================================
+
+Project Overview
+---------------
+This is a user-friendly web application specifically designed for Hindalco Industry to manage their industrial machines and equipment using QR codes. Think of it as a digital library for Hindalco's machines - each machine gets its own QR code, which when scanned, shows you everything you need to know about that machine, including maintenance records, warranty information, and even tutorial videos.
+
+What Does This System Do?
+------------------------
+1. Machine Management Made Simple
+   - Every machine gets its own digital profile
+   - Scan a QR code to instantly see machine details
+   - Keep track of machine locations and status
+   - Watch tutorial videos for proper machine operation
+
+2. Who Can Use It?
+   - Administrator: Can do everything in the system
+   - Maintainer: Can update maintenance records and machine details
+   Note: For security, only these two roles have access to the system
+
+Technology We're Using
+--------------------
+1. Frontend (The part you see and interact with)
+   - React.js: Creates the interactive web pages
+   - React Router: Helps navigate between different screens
+   - Axios: Handles communication with the backend
+   - QRCode.react: Creates QR codes for machines
+   - React Icons: Adds beautiful icons
+   - CSS Modules: Makes everything look good
+
+2. Backend (The brain behind the scenes)
+   - Node.js & Express.js: Runs the server
+   - MongoDB: Stores machine information and video URLs
+   - Mongoose: Helps manage the database
+   - Supabase: Handles authentication and tutorial video storage
+     * User authentication and authorization
+     * Secure session management
+     * Role-based access control
+     * Tutorail Video storage and management
+
+3. Where Everything Runs
+   - Frontend: Hosted on Vercel (makes the website fast)
+   - Backend: Runs on Render (keeps the server reliable)
+   - Database: MongoDB Atlas (keeps your data safe)
+   - Video Storage: Supabase (handles all tutorial videos)
+
+How Everything is Organized
+------------------------
+1. Frontend Structure
+   - /Components/
+     - DeviceTemplate.js: Shows machine details
+     - DeviceInventory.js: Lists all machines
+     - WarrantyModal.js: Manages warranty info
+     - MaintenanceModal.js: Records maintenance
+     - TutorialModal.js: Displays machine tutorials
+   - /DeviceTools/
+     - DeviceViewer.js: QR code scanner view
+   - /contexts/
+     - AuthContext.js: Handles user login
+   - /api/
+     - apiClient.js: Talks to the backend
+   - /supabase/
+     - videoClient.js: Manages video uploads and playback
+
+2. Backend Structure
+   - /models/
+     - Device.js: Defines how machine data is stored
+   - /routes/
+     - deviceRoutes.js: Handles machine-related requests
+     - videoRoutes.js: Manages video upload and retrieval
+   - /middleware/
+     - Checks if users are allowed to perform actions
+
+Key Features
+-----------
+1. Machine Management
+   - Add and update machine information
+   - View all machines in a grid or list
+   - Search for specific machines
+   - Generate QR codes for each machine
+
+2. Video Tutorial System
+   - Upload tutorial videos to Supabase
+   - Secure video storage and streaming
+   - Play videos directly in machine details
+   - Automatic video URL management
+
+3. Access Control
+   - Administrator: Complete system control
+   - Maintainer: Can update records and videos
+   - Secure login system
+   - Protected sensitive operations
+
+4. Maintenance Tracking
+   - Record maintenance activities
+   - View maintenance history
+   - Track maintenance costs
+   - Set maintenance schedules
+
+5. Warranty Management
+   - Track warranty expiration dates
+   - Extend warranty periods
+   - Get warranty expiration alerts
+
+How We Keep Everything Safe
+------------------------
+1. User Security with Supabase
+   - Secure Authentication System
+     * Email/password authentication
+     * JWT token management
+     * Automatic session handling
+     * Password reset functionality
+   - Role-based Access Control
+     * Administrator role with full system access
+     * Maintainer role with limited permissions
+     * Protected API endpoints
+     * Route guards in frontend
+   - Security Features
+     * Row Level Security (RLS) policies
+     * SQL injection protection
+     * CORS configuration
+     * Rate limiting
+
+2. Data Protection
+   - Encrypted connections (SSL/TLS)
+   - Secure video storage in Supabase
+   - Regular data backups
+   - Token-based API authentication
+
+
+This system makes it easy to manage industrial machines by combining QR codes, video tutorials, and detailed record-keeping. Whether you're an administrator overseeing everything or a maintainer updating records, the system is designed to be straightforward and helpful.
+
+For technical setup instructions, check the README.md files in the frontend and backend folders.
