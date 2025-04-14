@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import apiClient from "../api/apiClient";
+// import { useNavigate } from "react-router-dom";
 import "./DeviceInventory.css";
-import { FiSearch, FiGrid, FiList, FiPlus, FiX } from "react-icons/fi";
+import { FiSearch, FiGrid, FiList, FiX } from "react-icons/fi";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -16,26 +16,41 @@ const DeviceInventory = () => {
   const [error, setError] = useState(null);
   const { role } = useAuth();
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
     const fetchDevices = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const response = await axios.get(
-          "https://hindalco-machine.onrender.com/devices"
-        );
-        setDevices(response.data);
+        console.log("Fetching devices...");
+        const response = await apiClient.get("/devices");
+        if (isMounted) {
+          console.log("Devices fetched successfully:", response.data.length);
+          setDevices(response.data);
+        }
       } catch (error) {
-        console.error("Error fetching devices:", error.message);
-        setError(error.message);
-        setDevices([]);
+        console.error("Error fetching devices:", error);
+        if (isMounted) {
+          setError(
+            error.message || "Failed to load devices. Please try again."
+          );
+          setDevices([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDevices();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredDevices = devices.filter(

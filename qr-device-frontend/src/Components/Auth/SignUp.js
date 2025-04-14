@@ -6,7 +6,7 @@ import "./Auth.css";
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("maintainer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -120,9 +120,8 @@ const SignUp = () => {
               onChange={(e) => setRole(e.target.value)}
               required
             >
-              <option value="user">User</option>
               <option value="admin">Admin</option>
-              <option value="supervisor">Supervisor</option>
+              <option value="maintainer">Maintainer</option>
             </select>
             <div className="helper-text">
               Select your role in the organization

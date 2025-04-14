@@ -13,6 +13,8 @@ A comprehensive web application designed for Hindalco Industry to manage industr
 - Context API for state management
 - Protected routes with Supabase authentication
 - Responsive design with CSS Modules
+- Axios-based API client with automatic token refresh
+- Interceptor-based error handling and authentication
 
 ### Backend Architecture
 

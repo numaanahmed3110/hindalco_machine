@@ -10,7 +10,8 @@ import {
   FiMoreVertical,
   FiPlus,
 } from "react-icons/fi";
-import { jsPDF } from 'jspdf';
+import { jsPDF } from "jspdf";
+import apiClient from "../api/apiClient";
 
 const DevicePage = () => {
   const [devices, setDevices] = useState([]);
@@ -22,15 +23,12 @@ const DevicePage = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch("https://hindalco-machine.onrender.com/devices")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch devices");
-        }
-        return res.json();
-      })
-      .then((data) => {
+
+    const fetchDevices = async () => {
+      try {
+        const response = await apiClient.get("/devices");
         // Handle both response formats - either direct array or nested in data.devices
+        const data = response.data;
         const deviceArray = Array.isArray(data)
           ? data
           : data.data && Array.isArray(data.data.devices)
@@ -39,13 +37,15 @@ const DevicePage = () => {
           ? data.data
           : [];
         setDevices(deviceArray);
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching devices:", error);
-        setError(error.message);
+        setError(error.message || "Failed to fetch devices");
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchDevices();
   }, []);
 
   // Function to toggle device selection
@@ -105,7 +105,6 @@ const DevicePage = () => {
   const getDeviceUrl = (deviceId) => {
     return `https://hindalco-machine.vercel.app/device-view/${deviceId}`;
   };
-
 
   if (loading)
     return (
@@ -317,29 +316,28 @@ const DevicePage = () => {
 
 export default DevicePage;
 
+const downloadQRAsPDF = (device) => {
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
 
-  const downloadQRAsPDF = (device) => {
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+  // Add title
+  pdf.setFontSize(16);
+  pdf.text("Device QR Code", 105, 20, { align: "center" });
 
-    // Add title
-    pdf.setFontSize(16);
-    pdf.text('Device QR Code', 105, 20, { align: 'center' });
+  // Add device info
+  pdf.setFontSize(12);
+  pdf.text(`Device Name: ${device.name}`, 20, 40);
+  pdf.text(`Model: ${device.model || "N/A"}`, 20, 50);
+  pdf.text(`Serial Number: ${device.serialNumber || "N/A"}`, 20, 60);
 
-    // Add device info
-    pdf.setFontSize(12);
-    pdf.text(`Device Name: ${device.name}`, 20, 40);
-    pdf.text(`Model: ${device.model || 'N/A'}`, 20, 50);
-    pdf.text(`Serial Number: ${device.serialNumber || 'N/A'}`, 20, 60);
-
-    // Add QR code image
-    const qrImage = new Image();
-    qrImage.src = `https://hindalco-machine.onrender.com/device/qr/${device._id}`;
-    qrImage.onload = function() {
-      pdf.addImage(qrImage, 'PNG', 65, 80, 80, 80);
-      pdf.save(`qr-${device.name}.pdf`);
-    };
+  // Add QR code image
+  const qrImage = new Image();
+  qrImage.src = `https://hindalco-machine.onrender.com/device/qr/${device._id}`;
+  qrImage.onload = function () {
+    pdf.addImage(qrImage, "PNG", 65, 80, 80, 80);
+    pdf.save(`qr-${device.name}.pdf`);
   };
+};

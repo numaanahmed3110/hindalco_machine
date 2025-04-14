@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [sessionTimeout, setSessionTimeout] = useState(null);
 
   // Function to update user state with session data
   const updateUserState = useCallback(
@@ -74,6 +75,7 @@ export const AuthProvider = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
+        console.log("Initializing auth state...");
         // Check for existing session in localStorage
         const {
           data: { session },
@@ -86,26 +88,30 @@ export const AuthProvider = ({ children }) => {
         const isSessionExpired =
           sessionExpiresAt && parseInt(sessionExpiresAt) * 1000 < Date.now();
 
-        if (isSessionExpired && session) {
-          console.log("Session appears expired, attempting refresh");
-          try {
-            const { data: refreshData, error: refreshError } =
-              await supabase.auth.refreshSession();
-            if (refreshError) throw refreshError;
-            if (refreshData.session) {
-              console.log("Session refreshed successfully");
-              await updateUserState(refreshData.session);
+        if (session) {
+          console.log("Found existing session", session.user.id);
+          if (isSessionExpired) {
+            console.log("Session appears expired, attempting refresh");
+            try {
+              const { data: refreshData, error: refreshError } =
+                await supabase.auth.refreshSession();
+              if (refreshError) throw refreshError;
+              if (refreshData.session) {
+                console.log("Session refreshed successfully");
+                await updateUserState(refreshData.session);
+              }
+            } catch (refreshErr) {
+              console.error("Failed to refresh session:", refreshErr);
+              setUser(null);
+              setRole(null);
+              localStorage.removeItem("sessionExpiresAt");
             }
-          } catch (refreshErr) {
-            console.error("Failed to refresh session:", refreshErr);
-            setUser(null);
-            setRole(null);
-            localStorage.removeItem("sessionExpiresAt");
+          } else {
+            console.log("Found valid existing session", session);
+            await updateUserState(session);
           }
-        } else if (session) {
-          console.log("Found valid existing session", session);
-          await updateUserState(session);
         } else {
+          // No session exists
           console.log("No existing session found");
           setUser(null);
           setRole(null);
@@ -200,7 +206,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [updateUserState]);
 
-  // Set up periodic token refresh check
+  // Set up periodic token refresh check and handle page visibility
   useEffect(() => {
     if (!user) return;
 
@@ -209,8 +215,51 @@ export const AuthProvider = ({ children }) => {
       checkAndRefreshToken();
     }, 60000);
 
-    return () => clearInterval(tokenCheckInterval);
-  }, [user, checkAndRefreshToken]);
+    // Handle page visibility change (tab switching)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // User switched away from the tab - start a session timeout
+        const timeoutId = setTimeout(() => {
+          // If user doesn't return within 30 minutes, clear the session
+          console.log("Session timeout due to inactivity");
+          localStorage.removeItem("sessionExpiresAt");
+          signOut();
+        }, 30 * 60 * 1000); // 30 minutes timeout
+
+        setSessionTimeout(timeoutId);
+      } else if (document.visibilityState === "visible") {
+        // User returned to the tab - clear the timeout
+        if (sessionTimeout) {
+          clearTimeout(sessionTimeout);
+          setSessionTimeout(null);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(tokenCheckInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+      }
+    };
+  }, [user, checkAndRefreshToken, sessionTimeout]);
+
+  // Handle page unload (close/refresh)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Store a flag indicating the page is being closed
+      sessionStorage.setItem("pageClosing", "true");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   const value = {
     user,

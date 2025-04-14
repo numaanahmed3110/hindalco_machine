@@ -1,8 +1,14 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import apiClient from "../api/apiClient";
 import "./MaintenanceModal.css";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const WarrantyModal = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
+  const { user, role } = useAuth();
+  const navigate = useNavigate();
+  const [showAuthMessage, setShowAuthMessage] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
   const [newWarrantyDate, setNewWarrantyDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -14,12 +20,9 @@ const WarrantyModal = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(
-        `https://hindalco-machine.onrender.com/devices/${deviceId}/warranty`,
-        {
-          warrantyExpiration: newWarrantyDate,
-        }
-      );
+      const response = await apiClient.put(`/devices/${deviceId}/warranty`, {
+        warrantyExpiration: newWarrantyDate,
+      });
 
       onWarrantyUpdate(response.data);
       setIsSubmitting(false);
@@ -31,7 +34,52 @@ const WarrantyModal = ({ isOpen, onClose, deviceId, onWarrantyUpdate }) => {
     }
   };
 
+  useEffect(() => {
+    // Check authentication when modal is opened
+    if (isOpen) {
+      if (!user) {
+        // Redirect to login page with return URL
+        navigate(`/login?returnUrl=/device/${deviceId}/warranty`);
+        onClose();
+      } else if (role !== "admin") {
+        // Show unauthorized message for non-admin users
+        setAuthMessage("Only administrators can update warranty information.");
+        setShowAuthMessage(true);
+      }
+    }
+  }, [isOpen, user, role, deviceId, navigate, onClose]);
+
+  // Handle auth message close
+  const handleAuthMessageClose = () => {
+    setShowAuthMessage(false);
+    onClose();
+  };
+
   if (!isOpen) return null;
+  
+  // Show auth message if user doesn't have permission
+  if (showAuthMessage) {
+    return (
+      <div className="maintenance-modal-overlay">
+        <div className="maintenance-modal">
+          <div className="modal-header">
+            <h3>Authentication Required</h3>
+            <button className="close-button" onClick={handleAuthMessageClose}>
+              &times;
+            </button>
+          </div>
+          <div className="auth-message">
+            <p>{authMessage}</p>
+            <div className="form-actions">
+              <button className="submit-button" onClick={handleAuthMessageClose}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="maintenance-modal-overlay">

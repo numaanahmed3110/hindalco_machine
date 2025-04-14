@@ -108,8 +108,10 @@ How We Keep Everything Safe
    - Secure Authentication System
      * Email/password authentication
      * JWT token management
-     * Automatic session handling
+     * Automatic session handling and token refresh
      * Password reset functionality
+     * Interceptor-based API authentication
+     * Automatic error handling for API requests
    - Role-based Access Control
      * Administrator role with full system access
      * Maintainer role with limited permissions
