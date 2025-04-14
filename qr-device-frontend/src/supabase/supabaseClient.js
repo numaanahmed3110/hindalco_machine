@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Helper functions for authentication
-export const signUpWithEmail = async (email, password, role = "user") => {
+export const signUpWithEmail = async (email, password, role) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -100,5 +100,9 @@ export const getCurrentUser = async () => {
 
 export const getUserRole = async () => {
   const { user, error } = await getCurrentUser();
-  return { role: user?.user_metadata?.role || "user", error };
+  const userRole = user?.user_metadata?.role;
+  return {
+    role: userRole === "admin" || userRole === "maintainer" ? userRole : null,
+    error,
+  };
 };

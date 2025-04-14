@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiClient from "../api/apiClient";
 import "./DeviceTemplate.css";
-import TutorialModal from "./TutorialModal";
+import VideoPlayer from "./VideoPlayer";
+import VideoUploadModal from "./VideoUploadModal";
 import MaintenanceModal from "./MaintenanceModal";
 import WarrantyModal from "./WarrantyModal";
 import { useAuth } from "../contexts/AuthContext";
@@ -15,7 +16,8 @@ const DeviceTemplate = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
-  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState(false);
+  const [isVideoUploadOpen, setIsVideoUploadOpen] = useState(false);
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isWarrantyModalOpen, setIsWarrantyModalOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -124,20 +126,53 @@ const DeviceTemplate = () => {
         <div className="device-template-title">
           <h2>{device.name}</h2>
           <span className="model-badge">{device.model}</span>
-          {device.tutorialVideo && (
-            <button
-              className="tutorial-button"
-              onClick={() => setIsTutorialOpen(true)}
-            >
-              Watch Tutorial
-            </button>
-          )}
+          <button
+            className="tutorial-button"
+            onClick={() => {
+              if (device.tutorialVideo) {
+                setIsVideoPlayerOpen(true);
+              } else {
+                // Check if user is logged in before opening upload modal
+                if (!user) {
+                  // Redirect to login page with return URL
+                  navigate(`/login?returnUrl=/device-view/${id}`);
+                  return;
+                }
+
+                // Check if user has admin role
+                if (role !== "admin") {
+                  setAuthMessage(
+                    "Only administrators can upload tutorial videos."
+                  );
+                  setShowAuthModal(true);
+                  return;
+                }
+
+                // User is admin, show upload modal
+                setIsVideoUploadOpen(true);
+              }
+            }}
+          >
+            {device.tutorialVideo
+              ? "Play Tutorial Video"
+              : "Add Tutorial Video"}
+          </button>
         </div>
 
-        <TutorialModal
+        <VideoPlayer
           videoUrl={device.tutorialVideo}
-          isOpen={isTutorialOpen}
-          onClose={() => setIsTutorialOpen(false)}
+          isOpen={isVideoPlayerOpen}
+          onClose={() => setIsVideoPlayerOpen(false)}
+        />
+
+        <VideoUploadModal
+          isOpen={isVideoUploadOpen}
+          onClose={() => setIsVideoUploadOpen(false)}
+          deviceId={id}
+          onUploadSuccess={() => {
+            // Refresh device data after successful upload
+            setRetryCount((prev) => prev + 1);
+          }}
         />
 
         <div className="device-tabs">
@@ -297,10 +332,10 @@ const DeviceTemplate = () => {
                   if (!user) {
                     // Redirect to login page with return URL
                     navigate(`/login?returnUrl=/device-view/${id}`);
-                  } else if (role !== "admin" && role !== "supervisor") {
-                    // Show unauthorized message for non-admin/supervisor users
+                  } else if (role !== "admin" && role !== "maintainer") {
+                    // Show unauthorized message for non-admin/maintainer users
                     setAuthMessage(
-                      "Only administrators and supervisors can add maintenance records."
+                      "Only administrators and maintainers can add maintenance records."
                     );
                     setShowAuthModal(true);
                   } else {
@@ -351,14 +386,6 @@ const DeviceTemplate = () => {
           deviceId={id}
           onMaintenanceUpdate={(updatedDevice) => setDevice(updatedDevice)}
         />
-
-        {device.tutorialVideo && (
-          <TutorialModal
-            videoUrl={device.tutorialVideo}
-            isOpen={isTutorialOpen}
-            onClose={() => setIsTutorialOpen(false)}
-          />
-        )}
       </div>
 
       <div className="device-template-footer">
